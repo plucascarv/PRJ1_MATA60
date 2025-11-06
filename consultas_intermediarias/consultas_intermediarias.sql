@@ -1,4 +1,4 @@
-
+-- Em relacao a indexacao RL_PARTICIPA, iD_ATIVIDADE, IS_CERTIFICADO, ID_PARTICIPANTE sao candidatos analisando essas consultas
 
 --CONSULTA 1
 --Relatório de atividades com maior participação e taxa de certificação	4.2  Apresentar dados estatísticos sobre participação, presença e emissão de certificados	Fornece dados estatísticos específicos sobre participação e emissão de certificados por atividade
