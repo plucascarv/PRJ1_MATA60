@@ -1,3 +1,4 @@
+-- Querry 1
 -- Requisito 1.6: A query visa trazer um relatório de Impacto e Participação por Atividade
 SELECT 
     a.ID_ATIVIDADE,
@@ -22,6 +23,7 @@ LEFT JOIN TB_PARCEIRO par ON a.ID_ATIVIDADE = par.ID_ATIVIDADE
 GROUP BY a.ID_ATIVIDADE, a.NM_ATIVIDADE, a.DT_ATIVIDADE, a.TP_ATIVIDADE, a.NM_AREA_ESTUDO, a.CARGA_HORARIA
 ORDER BY a.DT_ATIVIDADE DESC, total_participantes DESC;
 
+-- Querry 2
 -- Requisito 1.4: Gestão de Múltiplos Instrutores por Atividade
 SELECT 
     a.ID_ATIVIDADE,
@@ -29,7 +31,9 @@ SELECT
     a.DT_ATIVIDADE,
     a.DS_LOCAL,
     COUNT(CASE WHEN p.TP_PARTICIPACAO = 'I' THEN 1 END) as quantidade_instrutores,
-    GROUP_CONCAT(DISTINCT CONCAT(p.NM_PRIMEIRO, ' ', COALESCE(p.NM_MEIO, ''), ' ', p.NM_ULTIMO) SEPARATOR ', ') as nomes_instrutores,
+    STRING_AGG(
+        DISTINCT CONCAT_WS(' ', p.NM_PRIMEIRO, p.NM_MEIO, p.NM_ULTIMO), ', '
+    ) FILTER (WHERE p.TP_PARTICIPACAO = 'I') as nomes_instrutores,
     COUNT(DISTINCT rl.ID_PARTICIPANTE) as total_envolvidos,
     a.CARGA_HORARIA,
     a.DS_ATIVIDADE,
@@ -49,12 +53,13 @@ GROUP BY a.ID_ATIVIDADE, a.NM_ATIVIDADE, a.DT_ATIVIDADE, a.DS_LOCAL, a.CARGA_HOR
 HAVING COUNT(CASE WHEN p.TP_PARTICIPACAO = 'I' THEN 1 END) > 1
 ORDER BY quantidade_instrutores DESC;
 
+-- Querry 3
 -- Requisito 1.5: Análise de Parcerias com Empresas e ONGs
 SELECT 
     par.TP_CATEGORIA,
     par.NM_EMPRESA,
     COUNT(DISTINCT par.ID_ATIVIDADE) as total_atividades_apoiadas,
-    GROUP_CONCAT(DISTINCT a.NM_ATIVIDADE SEPARATOR '; ') as atividades_apoiadas,
+    STRING_AGG(DISTINCT a.NM_ATIVIDADE, '; ') as atividades_apoiadas,
     COUNT(DISTINCT rl.ID_PARTICIPANTE) as total_participantes_impactados,
     SUM(a.CARGA_HORARIA) as carga_horaria_total_apoiada,
     COUNT(DISTINCT a.NM_AREA_ESTUDO) as areas_estudo_envolvidas,
@@ -74,10 +79,11 @@ LEFT JOIN RL_PARTICIPA rl ON a.ID_ATIVIDADE = rl.ID_ATIVIDADE
 GROUP BY par.TP_CATEGORIA, par.NM_EMPRESA
 ORDER BY total_atividades_apoiadas DESC, total_participantes_impactados DESC;
 
+-- Querry 4
 -- Requisito 1.7: Emissão Automática de Certificados
 SELECT 
     p.ID_PARTICIPANTE,
-    CONCAT(p.NM_PRIMEIRO, ' ', COALESCE(p.NM_MEIO, ''), ' ', p.NM_ULTIMO) as nome_completo,
+    CONCAT_WS(' ', p.NM_PRIMEIRO, p.NM_MEIO, P.NM_ULTIMO) as nome_completo,
     p.CD_CPF_PARTICIPANTE,
     a.ID_ATIVIDADE,
     a.NM_ATIVIDADE,
@@ -99,16 +105,17 @@ SELECT
      FROM RL_PARTICIPA rl2 
      JOIN TB_ATIVIDADE a2 ON rl2.ID_ATIVIDADE = a2.ID_ATIVIDADE 
      WHERE rl2.ID_PARTICIPANTE = p.ID_PARTICIPANTE 
-     AND a2.DT_ATIVIDADE <= CURDATE() 
+     AND a2.DT_ATIVIDADE <= CURRENT_DATE
      AND rl2.IS_CERTIFICADO = 'N') as total_pendentes_participante,
     RANK() OVER (PARTITION BY a.ID_ATIVIDADE ORDER BY p.TP_PARTICIPACAO DESC) as prioridade_emissao
 FROM TB_PARTICIPANTE p
 JOIN RL_PARTICIPA rl ON p.ID_PARTICIPANTE = rl.ID_PARTICIPANTE
 JOIN TB_ATIVIDADE a ON rl.ID_ATIVIDADE = a.ID_ATIVIDADE
-WHERE a.DT_ATIVIDADE <= CURDATE()
+WHERE a.DT_ATIVIDADE <= CURRENT_DATE
   AND rl.IS_CERTIFICADO = 'N'
 ORDER BY a.DT_ATIVIDADE, p.NM_ULTIMO, p.NM_PRIMEIRO;
 
+-- Querry 5
 -- Requisito 1.3: Dashboard de Atividades - Status e Métricas
 WITH status_atividade AS (
     SELECT 
@@ -118,8 +125,8 @@ WITH status_atividade AS (
         a.TP_ATIVIDADE,
         a.NM_AREA_ESTUDO,
         CASE 
-            WHEN a.DT_ATIVIDADE > CURDATE() THEN 'AGENDADA'
-            WHEN a.DT_ATIVIDADE = CURDATE() THEN 'EM ANDAMENTO'
+            WHEN a.DT_ATIVIDADE > CURRENT_DATE THEN 'AGENDADA'
+            WHEN a.DT_ATIVIDADE = CURRENT_DATE THEN 'EM ANDAMENTO'
             ELSE 'REALIZADA'
         END as status_atividade,
         COUNT(DISTINCT rl.ID_PARTICIPANTE) as total_participantes,
@@ -158,6 +165,7 @@ ORDER BY
         ELSE 3
     END, TP_ATIVIDADE;
 
+-- Querry 6
 -- Requisito 1.6: Análise de Feedback e Satisfação por Tipo de Atividade
 SELECT 
     a.TP_ATIVIDADE,
@@ -191,17 +199,18 @@ GROUP BY a.TP_ATIVIDADE, a.NM_AREA_ESTUDO
 HAVING COUNT(rl.ID_PARTICIPANTE) >= 5
 ORDER BY taxa_resposta DESC, total_participantes DESC;
 
+-- Querry 7
 -- Requisito 1.6: Relatório de Participação por Instituição e Área de Estudo
-SELECT 
+SELECT
     p.NM_INSTITUICAO,
     a.NM_AREA_ESTUDO,
     COUNT(DISTINCT p.ID_PARTICIPANTE) as total_participantes_unicos,
     COUNT(DISTINCT a.ID_ATIVIDADE) as total_atividades_participadas,
     SUM(a.CARGA_HORARIA) as carga_horaria_total,
-    COUNT(DISTINCT CASE WHEN p.TP_PARTICIPACAO = 'I' THEN p.ID_PARTICIPANTE END) as instrutores,
-    COUNT(DISTINCT CASE WHEN p.TP_PARTICIPACAO = 'M' THEN p.ID_PARTICIPANTE END) as monitores,
-    COUNT(DISTINCT CASE WHEN p.TP_PARTICIPACAO = 'O' THEN p.ID_PARTICIPANTE END) as ouvintes,
-    ROUND(AVG(COUNT(DISTINCT a.ID_ATIVIDADE)) OVER (PARTITION BY p.NM_INSTITUICAO), 2) as media_atividades_por_participante,
+    COUNT(DISTINCT p.ID_PARTICIPANTE) FILTER (WHERE p.TP_PARTICIPACAO = 'I') as instrutores,
+    COUNT(DISTINCT p.ID_PARTICIPANTE) FILTER (WHERE p.TP_PARTICIPACAO = 'M') as monitores,
+    COUNT(DISTINCT p.ID_PARTICIPANTE) FILTER (WHERE p.TP_PARTICIPACAO = 'O') as ouvintes,
+    ROUND(CAST(COUNT(*) AS DECIMAL) / COUNT(DISTINCT p.ID_PARTICIPANTE), 2) as media_atividades_por_participante,
     (SELECT COUNT(DISTINCT p2.NM_INSTITUICAO)
      FROM TB_PARTICIPANTE p2
      JOIN RL_PARTICIPA rl2 ON p2.ID_PARTICIPANTE = rl2.ID_PARTICIPANTE
@@ -214,9 +223,10 @@ JOIN RL_PARTICIPA rl ON p.ID_PARTICIPANTE = rl.ID_PARTICIPANTE
 JOIN TB_ATIVIDADE a ON rl.ID_ATIVIDADE = a.ID_ATIVIDADE
 WHERE p.NM_INSTITUICAO IS NOT NULL
 GROUP BY p.NM_INSTITUICAO, a.NM_AREA_ESTUDO
-HAVING total_participantes_unicos >= 3
-ORDER BY p.NM_INSTITUICAO, total_atividades_participadas DESC;
+HAVING COUNT(DISTINCT p.ID_PARTICIPANTE) >= 3
+ORDER BY p.NM_INSTITUICAO, total_participantes_unicos DESC;
 
+-- Querry 8
 -- Requisito 1.1: Gestão de Cronograma e Alocação de Recursos
 SELECT 
     a.ID_ATIVIDADE,
@@ -236,7 +246,7 @@ SELECT
            FROM TB_ATIVIDADE a2 
            JOIN RL_PARTICIPA rl2 ON a2.ID_ATIVIDADE = rl2.ID_ATIVIDADE
            WHERE a2.TP_ATIVIDADE = a.TP_ATIVIDADE
-             AND a2.DT_ATIVIDADE < CURDATE()
+             AND a2.DT_ATIVIDADE < CURRENT_DATE
            GROUP BY a2.ID_ATIVIDADE) as sub) as media_historica_participantes,
     RANK() OVER (ORDER BY COUNT(DISTINCT CASE WHEN p.TP_PARTICIPACAO = 'I' THEN p.ID_PARTICIPANTE END) DESC) as ranking_instrutores,
     CASE 
@@ -250,10 +260,11 @@ FROM TB_ATIVIDADE a
 LEFT JOIN RL_PARTICIPA rl ON a.ID_ATIVIDADE = rl.ID_ATIVIDADE
 LEFT JOIN TB_PARTICIPANTE p ON rl.ID_PARTICIPANTE = p.ID_PARTICIPANTE
 LEFT JOIN TB_PARCEIRO par ON a.ID_ATIVIDADE = par.ID_ATIVIDADE
-WHERE a.DT_ATIVIDADE >= CURDATE()
+WHERE a.DT_ATIVIDADE >= CURRENT_DATE
 GROUP BY a.ID_ATIVIDADE, a.NM_ATIVIDADE, a.DT_ATIVIDADE, a.HR_ATIVIDADE, a.DS_LOCAL, a.TP_ATIVIDADE, a.NM_AREA_ESTUDO, a.CARGA_HORARIA
 ORDER BY a.DT_ATIVIDADE, a.HR_ATIVIDADE;
 
+-- Querry 9
 -- Requisito 1.5: Análise de Eficiência por Tipo de Parceria
 SELECT 
     par.TP_CATEGORIA,
@@ -283,6 +294,7 @@ LEFT JOIN RL_PARTICIPA rl ON a.ID_ATIVIDADE = rl.ID_ATIVIDADE
 GROUP BY par.TP_CATEGORIA
 ORDER BY total_participantes_impactados DESC;
 
+-- Querry 10
 -- Requisito 1.6 Relatório Consolidado para Diretoria
 WITH metricas_consolidadas AS (
     SELECT 
