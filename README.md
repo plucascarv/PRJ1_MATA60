@@ -25,16 +25,16 @@ Para configurar o banco de dados e executar os testes, siga esta ordem.
 
 3.  Execute o script de criação das tabelas na Querry Tool:
 
-      * [cite\_start]`DDL_table_creation.sql` [cite: 1]
+      * `DDL_table_creation.sql`
 
 **Importante:** Os scripts de inserção de dados (`INSERT`) devem ser executados **após** a criação das tabelas (`DDL`) e **na ordem correta** para respeitar as chaves estrangeiras.
 
 4.  Execute os scripts de povoamento (INSERTs) **nesta ordem**:
 
-      * [cite\_start]`inserts_participantes.sql` [cite: 2]
-      * [cite\_start]`inserts_atividades.sql` [cite: 5]
-      * [cite\_start]`inserts_parceiros.sql` [cite: 4]
-      * [cite\_start]`inserts_participa.sql` [cite: 3] (Este deve ser o último, pois depende dos participantes e atividades).
+      * `inserts_participantes.sql`
+      * `inserts_atividades.sql`
+      * `inserts_parceiros.sql`
+      * `inserts_participa.sql` (Este deve ser o último, pois depende dos participantes e atividades).
 
 Neste ponto, você tem o banco de dados no estado baseline.
 
@@ -54,14 +54,14 @@ Execute suas consultas de teste diretamente após o povoamento (Passo 1.4). Os �
 #### Teste 2: Plano de Indexação 1
 
 1.  Execute o script para criar os índices do Plano 1:
-      * [cite\_start]`plano_1.sql` [cite: 6]
+      * `plano_1.sql`
 2.  Execute suas consultas de teste e registre os tempos.
 
 #### Teste 3: Plano de Indexação 2
 
 1.  **Limpe os índices do Plano 1.** Você pode fazer isso executando os comandos `DROP INDEX` relevantes (veja a seção "Limpando Índices" abaixo).
 2.  Execute o script para criar os índices do Plano 2:
-      * [cite\_start]`plano_2.sql` [cite: 7]
+      * `plano_2.sql`
 3.  Execute suas consultas de teste e registre os tempos.
 
 -----
@@ -70,7 +70,7 @@ Execute suas consultas de teste diretamente após o povoamento (Passo 1.4). Os �
 
 Para trocar do Plano 1 para o Plano 2 (ou voltar ao Baseline), você deve "dropar" os índices criados.
 
-[cite\_start]**Para remover os índices do Plano 1:** [cite: 6]
+**Para remover os índices do Plano 1:**
 
 ```sql
 DROP INDEX IF EXISTS idx_participa_hash_id_ativ;
@@ -81,7 +81,7 @@ DROP INDEX IF EXISTS idx_participante_tp_btree;
 DROP INDEX IF EXISTS idx_atividade_data_btree;
 ```
 
-[cite\_start]**Para remover os índices do Plano 2:** [cite: 7]
+**Para remover os índices do Plano 2:**
 
 ```sql
 DROP INDEX IF EXISTS idx_participa_btree;
@@ -92,10 +92,10 @@ DROP INDEX IF EXISTS idx_participa_certificado_btree;
 
 ## Descrição dos Arquivos
 
-  * [cite\_start]`DDL_table_creation.sql`: [cite: 1] Define a estrutura de 4 tabelas (`TB_PARTICIPANTE`, `TB_ATIVIDADE`, `RL_PARTICIPA`, `TB_PARCEIRO`).
-  * [cite\_start]`inserts_participantes.sql`: [cite: 2] Script de povoamento da tabela `TB_PARTICIPANTE`.
-  * [cite\_start]`inserts_atividades.sql`: [cite: 5] Script de povoamento da tabela `TB_ATIVIDADE`.
-  * [cite\_start]`inserts_parceiros.sql`: [cite: 4] Script de povoamento da tabela `TB_PARCEIRO`.
-  * [cite\_start]`inserts_participa.sql`: [cite: 3] Script de povoamento da tabela de relacionamento `RL_PARTICIPA`.
-  * [cite\_start]`plano_1.sql`: [cite: 6] Cria um conjunto de índices B-Tree e Hash para otimização.
-  * [cite\_start]`plano_2.sql`: [cite: 7] Cria um conjunto alternativo de índices B-Tree para otimização.
+  * `DDL_table_creation.sql`: Define a estrutura de 4 tabelas (`TB_PARTICIPANTE`, `TB_ATIVIDADE`, `RL_PARTICIPA`, `TB_PARCEIRO`).
+  * `inserts_participantes.sql`: Script de povoamento da tabela `TB_PARTICIPANTE`.
+  * `inserts_atividades.sql`: Script de povoamento da tabela `TB_ATIVIDADE`.
+  * `inserts_parceiros.sql`: Script de povoamento da tabela `TB_PARCEIRO`.
+  * `inserts_participa.sql`: Script de povoamento da tabela de relacionamento `RL_PARTICIPA`.
+  * `plano_1.sql`: Cria um conjunto de índices B-Tree e Hash para otimização.
+  * `plano_2.sql`: Cria um conjunto alternativo de índices B-Tree para otimização.
